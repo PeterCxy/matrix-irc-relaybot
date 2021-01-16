@@ -85,6 +85,9 @@ module.exports = class Forwarder {
       case "m.room.message":
         switch (content.msgtype) {
           case "m.image":
+          case "m.audio":
+          case "m.file":
+          case "m.video":
             msgTxt = `${content.body} ${this.clientMatrix.mxcUrlToHttp(content.url)}`;
             break;
           default:
