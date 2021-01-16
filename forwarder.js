@@ -101,6 +101,7 @@ module.exports = class Forwarder {
   }
 
   onMatrixMessage(event, room, toStartOfTimeline) {
+    this.clientMatrix.sendReadReceipt(event);
     if (toStartOfTimeline) {
       return; // Ignore pagniation
     }
