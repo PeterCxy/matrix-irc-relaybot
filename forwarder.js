@@ -1,9 +1,12 @@
+var NickMap = require("./nickmap");
+
 module.exports = class Forwarder {
   constructor(clientIRC, clientMatrix, mappingI2M, mappingM2I) {
     this.clientIRC = clientIRC;
     this.clientMatrix = clientMatrix;
     this.mappingI2M = mappingI2M;
     this.mappingM2I = mappingM2I;
+    this.nickMap = new NickMap("./nickmap.json");
   }
 
   joinIRCRooms() {
@@ -62,6 +65,41 @@ module.exports = class Forwarder {
     }
   }
 
+  isMatrixCommand(msg) {
+    return msg.startsWith("!");
+  }
+
+  handleMatrixCommand(sender, msg) {
+    let splitted = msg.split(" ");
+    let cmd = splitted[0].slice(1);
+
+    switch (cmd) {
+      case "nick":
+        if (splitted.length < 2) {
+          this.nickMap.set(sender.userId, null);
+          this.clientMatrix.sendMessage(sender.roomId, {
+            msgtype: "m.text",
+            body: `Nickname of '${sender.name}' cleared`
+          });
+        } else if (splitted.length >= 3 || splitted[1].length > 16) {
+          this.clientMatrix.sendMessage(sender.roomId, {
+            msgtype: "m.text",
+            body: "Invalid nickname format (too long or contains space)"
+          });
+        } else {
+          this.nickMap.set(sender.userId, splitted[1]);
+          this.clientMatrix.sendMessage(sender.roomId, {
+            msgtype: "m.text",
+            body: `Nickname of '${sender.name}' changed to '${splitted[1]}'`
+          });
+        }
+
+        return true;
+      default:
+        return false;
+    }
+  }
+
   onMatrixMessage(event, room, toStartOfTimeline) {
     if (toStartOfTimeline) {
       return; // Ignore pagniation
@@ -76,6 +114,13 @@ module.exports = class Forwarder {
     }
 
     let content = event.getContent();
+
+    if (event.getType() == "m.room.message" && this.isMatrixCommand(content.body)) {
+      if (this.handleMatrixCommand(event.sender, content.body)) {
+        return;
+      }
+    }
+
     let msgTxt = null;
     switch (event.getType()) {
       case "m.sticker":
@@ -98,6 +143,10 @@ module.exports = class Forwarder {
 
     if (msgTxt != null) {
       let name = this.stripMatrixName(event.sender.name);
+      let mappedName = this.nickMap.get(event.sender.userId);
+      if (mappedName) {
+        name = mappedName;
+      }
       if (content.msgtype == "m.emote") {
         // Special format for emote
         this.clientIRC.say(this.mappingM2I[room.roomId], `* ${name} ${msgTxt}`);
