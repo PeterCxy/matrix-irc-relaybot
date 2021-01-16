@@ -76,7 +76,6 @@ module.exports = class Forwarder {
     }
 
     let content = event.getContent();
-    console.log(content);
     let msgTxt = null;
     switch (event.getType()) {
       case "m.sticker":
