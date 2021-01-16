@@ -6,9 +6,24 @@ module.exports = class Forwarder {
     this.mappingM2I = mappingM2I;
   }
 
+  joinIRCRooms() {
+    console.log("Joining IRC Rooms...");
+    for (const room of Object.keys(this.mappingI2M)) {
+      this.clientIRC.say("ChanServ", "INVITE " + room);
+      this.clientIRC.join(room);
+    }
+  }
+
   start() {
+    this.joinIRCRooms();
     console.log("Starting relay");
+    this.clientIRC.on("registered", this.onReconnect.bind(this));
     this.clientIRC.on("message", this.onIRCMessage.bind(this));
+  }
+
+  onReconnect() {
+    console.log("IRC client reconnected");
+    this.joinIRCRooms();
   }
 
   onIRCMessage(event) {

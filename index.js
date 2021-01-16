@@ -8,7 +8,6 @@ function main() {
   console.log("Logging into IRC...");
   connectIrc(config, (clientIRC) => {
     console.log("Successfully logged into IRC!");
-    joinIRCRooms(clientIRC, Object.keys(mappingI2M));
     console.log("Logging into matrix...");
     connectMatrix(config, (clientMatrix) => {
       console.log("Successfully logged into Matrix!");
@@ -31,13 +30,6 @@ function connectIrc(config, callback) {
   let client = new IRC.Client();
   client.connect(config.irc);
   client.once('registered', () => { callback(client) });
-}
-
-function joinIRCRooms(client, rooms) {
-  for (const room of rooms) {
-    client.say("ChanServ", "INVITE " + room);
-    client.join(room);
-  }
 }
 
 function connectMatrix(config, callback) {
