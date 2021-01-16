@@ -1,0 +1,15 @@
+{
+  "name": "matrix-irc-relaybot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "PeterCxy",
+  "license": "WTFPL",
+  "dependencies": {
+    "irc-framework": "^4.9.0",
+    "matrix-js-sdk": "^9.4.1"
+  }
+}
