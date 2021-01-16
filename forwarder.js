@@ -54,6 +54,14 @@ module.exports = class Forwarder {
     this.clientMatrix.sendMessage(this.mappingI2M[event.target], content);
   }
 
+  stripMatrixName(name) {
+    if (name.length < 16) {
+      return name;
+    } else {
+      return name.slice(0, 16);
+    }
+  }
+
   onMatrixMessage(event, room, toStartOfTimeline) {
     if (toStartOfTimeline) {
       return; // Ignore pagniation
@@ -87,11 +95,12 @@ module.exports = class Forwarder {
     }
 
     if (msgTxt != null) {
+      let name = this.stripMatrixName(event.sender.name);
       if (content.msgtype == "m.emote") {
         // Special format for emote
-        this.clientIRC.say(this.mappingM2I[room.roomId], `* ${event.sender.name} ${msgTxt}`);
+        this.clientIRC.say(this.mappingM2I[room.roomId], `* ${name} ${msgTxt}`);
       } else {
-        this.clientIRC.say(this.mappingM2I[room.roomId], `[${event.sender.name}] ${msgTxt}`);
+        this.clientIRC.say(this.mappingM2I[room.roomId], `[${name}] ${msgTxt}`);
       }
     }
   }
