@@ -19,6 +19,7 @@ module.exports = class Forwarder {
     console.log("Starting relay");
     this.clientIRC.on("registered", this.onReconnect.bind(this));
     this.clientIRC.on("message", this.onIRCMessage.bind(this));
+    this.clientMatrix.on("Room.timeline", this.onMatrixMessage.bind(this));
   }
 
   onReconnect() {
@@ -51,5 +52,47 @@ module.exports = class Forwarder {
     }
 
     this.clientMatrix.sendMessage(this.mappingI2M[event.target], content);
+  }
+
+  onMatrixMessage(event, room, toStartOfTimeline) {
+    if (toStartOfTimeline) {
+      return; // Ignore pagniation
+    }
+
+    if (!this.mappingM2I[room.roomId]) {
+      return; // Unmapped room
+    }
+
+    if (event.sender.userId == this.clientMatrix.getUserId()) {
+      return; // Prevent loop
+    }
+
+    let content = event.getContent();
+    console.log(content);
+    let msgTxt = null;
+    switch (event.getType()) {
+      case "m.sticker":
+        msgTxt = `${content.body} ${this.clientMatrix.mxcUrlToHttp(content.url)}`;
+        break;
+      case "m.room.message":
+        switch (content.msgtype) {
+          case "m.image":
+            msgTxt = `${content.body} ${this.clientMatrix.mxcUrlToHttp(content.url)}`;
+            break;
+          default:
+            msgTxt = content.body;
+            break;
+        }
+        break;
+    }
+
+    if (msgTxt != null) {
+      if (content.msgtype == "m.emote") {
+        // Special format for emote
+        this.clientIRC.say(this.mappingM2I[room.roomId], `* ${event.sender.name} ${msgTxt}`);
+      } else {
+        this.clientIRC.say(this.mappingM2I[room.roomId], `[${event.sender.name}] ${msgTxt}`);
+      }
+    }
   }
 }
