@@ -67,6 +67,15 @@ module.exports = class Forwarder {
     }
   }
 
+  processMatrixName(userId, name) {
+    let mappedName = this.nickMap.get(userId);
+    if (mappedName) {
+      return mappedName;
+    } else {
+      return this.stripMatrixName(name);
+    }
+  }
+
   isMatrixCommand(msg) {
     return msg.startsWith("!");
   }
@@ -131,7 +140,7 @@ module.exports = class Forwarder {
         let tl = await this.clientMatrix.getEventTimeline(room.getUnfilteredTimelineSet(), replyEvId);
         let replyEv = tl.getEvents().filter((v) => v.getId() == replyEvId);
         if (replyEv.length > 0) {
-          replyUsername = replyEv[0].sender.name;
+          replyUsername = this.processMatrixName(replyEv[0].sender.userId, replyEv[0].sender.name);
           if (replyEv[0].getContent()['net.typeblog.i2m.irc_nick']) {
             replyUsername = replyEv[0].getContent()['net.typeblog.i2m.irc_nick'];
           }
@@ -168,11 +177,7 @@ module.exports = class Forwarder {
     }
 
     if (msgTxt != null) {
-      let name = this.stripMatrixName(event.sender.name);
-      let mappedName = this.nickMap.get(event.sender.userId);
-      if (mappedName) {
-        name = mappedName;
-      }
+      let name = this.processMatrixName(event.sender.userId, event.sender.name);
       if (content.msgtype == "m.emote") {
         // Special format for emote
         this.clientIRC.say(this.mappingM2I[room.roomId], `* ${name} ${msgTxt}`);
