@@ -54,6 +54,8 @@ module.exports = class Forwarder {
       }
     }
 
+    content['net.typeblog.i2m.irc_nick'] = event.nick;
+
     this.clientMatrix.sendMessage(this.mappingI2M[event.target], content);
   }
 
