@@ -125,6 +125,11 @@ module.exports = class Forwarder {
       return; // Prevent loop
     }
 
+    if (Date.now() - event.getTs() >= 2 * 60 * 1000) {
+      // Ignore events older than 2 minutes
+      return;
+    }
+
     let content = event.getContent();
 
     if (event.getType() == "m.room.message" && this.isMatrixCommand(content.body)) {
