@@ -1,5 +1,6 @@
 var NickMap = require("./nickmap");
 var axios = require("axios");
+var process = require("process");
 
 module.exports = class Forwarder {
   constructor(clientIRC, clientMatrix, mappingI2M, mappingM2I) {
@@ -11,9 +12,7 @@ module.exports = class Forwarder {
   }
 
   joinIRCRooms() {
-    console.log("Joining IRC Rooms...");
     for (const room of Object.keys(this.mappingI2M)) {
-      this.clientIRC.say("ChanServ", "INVITE " + room);
       this.clientIRC.join(room);
     }
   }
@@ -21,14 +20,17 @@ module.exports = class Forwarder {
   start() {
     this.joinIRCRooms();
     console.log("Starting relay");
-    this.clientIRC.on("registered", this.onReconnect.bind(this));
+    this.clientIRC.on("close", this.onClose.bind(this));
     this.clientIRC.on("message", this.onIRCMessage.bind(this));
     this.clientMatrix.on("Room.timeline", this.onMatrixMessage.bind(this));
+    // Ugly: ensure rooms are joined
+    // the "registered" event seems to be unreliable for reconnection
+    setInterval(this.joinIRCRooms.bind(this), 20 * 1000);
   }
 
-  onReconnect() {
-    console.log("IRC client reconnected");
-    this.joinIRCRooms();
+  onClose() {
+    console.log("IRC connection closed and failed to reconnect; exitting...");
+    process.exit(-1);
   }
 
   onIRCMessage(event) {
