@@ -33,7 +33,9 @@ function connectIrc(config, callback) {
 }
 
 function connectMatrix(config, callback) {
-  let client = matrix.createClient(config.matrix);
+  let client = matrix.createClient(Object.assign(config.matrix, {
+    timelineSupport: true
+  }));
   let myCallback = (state) => {
     switch (state) {
       case "PREPARED":
