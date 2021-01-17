@@ -111,7 +111,7 @@ module.exports = class Forwarder {
     }
   }
 
-  async onMatrixMessage(event, room, toStartOfTimeline) {
+  async onMatrixMessage(event, room, toStartOfTimeline, removed, data) {
     this.clientMatrix.sendReadReceipt(event);
     if (toStartOfTimeline) {
       return; // Ignore pagniation
@@ -127,6 +127,11 @@ module.exports = class Forwarder {
 
     if (Date.now() - event.getTs() >= 2 * 60 * 1000) {
       // Ignore events older than 2 minutes
+      return;
+    }
+
+    if (!data.liveEvent) {
+      // Ignore non-live events
       return;
     }
 
