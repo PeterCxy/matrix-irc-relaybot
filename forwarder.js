@@ -1,4 +1,5 @@
 var NickMap = require("./nickmap");
+var axios = require("axios");
 
 module.exports = class Forwarder {
   constructor(clientIRC, clientMatrix, mappingI2M, mappingM2I) {
@@ -78,6 +79,30 @@ module.exports = class Forwarder {
 
   isMatrixCommand(msg) {
     return msg.startsWith("!");
+  }
+
+  shouldUsePastebin(txt) {
+    return txt.length >= 160 || txt.split("\n").length > 3;
+  }
+
+  async pastebin(txt) {
+    let resp = await axios.request({
+      url: "https://fars.ee/",
+      method: "post",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      data: {
+        content: txt,
+        filename: "message.txt"
+      }
+    });
+    
+    if (resp.status != 200) {
+      throw resp.statusText;
+    } else {
+      return resp.data.url;
+    }
   }
 
   handleMatrixCommand(sender, msg) {
@@ -187,6 +212,15 @@ module.exports = class Forwarder {
     }
 
     if (msgTxt != null) {
+      if (this.shouldUsePastebin(msgTxt)) {
+        try {
+          msgTxt = "Long Msg: " + await this.pastebin(msgTxt);
+        } catch (err) {
+          console.log(err);
+          return;
+        }
+      }
+
       let name = this.processMatrixName(event.sender.userId, event.sender.name);
       if (content.msgtype == "m.emote") {
         // Special format for emote

@@ -9,6 +9,7 @@
   "author": "PeterCxy",
   "license": "WTFPL",
   "dependencies": {
+    "axios": "^0.21.1",
     "irc-framework": "^4.9.0",
     "matrix-js-sdk": "^9.4.1"
   }
