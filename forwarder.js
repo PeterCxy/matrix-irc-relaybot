@@ -63,10 +63,11 @@ module.exports = class Forwarder {
   }
 
   stripMatrixName(name) {
-    if (name.length < 16) {
-      return name;
+    let _name = name.replace(" (Perigram)", "");
+    if (_name.length < 16) {
+      return _name;
     } else {
-      return name.slice(0, 16);
+      return _name.slice(0, 16);
     }
   }
 
